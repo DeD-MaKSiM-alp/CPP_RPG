@@ -1,0 +1,5 @@
+build/
+.vs/
+__debug_bin*
+*.exe
+*.o

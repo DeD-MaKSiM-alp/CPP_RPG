@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Game",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/raylib_starter.exe",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "noDebug": true
+    }
+  ]
+}

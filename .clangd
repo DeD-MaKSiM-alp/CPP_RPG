@@ -1,2 +1,7 @@
+# Конфигурация clangd (см. https://clangd.llvm.org/config.html).
+# В YAML-файле проекта НЕТ ключа QueryDriver — он не входит в схему .clangd.
+# Разрешить опрос MinGW/G++ задаётся аргументом сервера: --query-driver=...
+# (например в настройках Cursor: clangd.arguments), либо достаточно compile_commands + кода с __has_include.
+
 CompileFlags:
   CompilationDatabase: build

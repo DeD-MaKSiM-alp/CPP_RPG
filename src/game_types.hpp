@@ -1,54 +1,54 @@
-#pragma once
+#pragma once // директива препроцессора: этот заголовочный файл подключают много раз, но текст вставляется только один раз
 
 // =============================================================================
-// game_types.hpp — данные боя без логики и без консоли.
-// Зачем отдельный файл: типы можно включать в тесты и в модули правил без зависимости
-// от ввода/вывода; границы «что есть в мире игры» видны в одном месте.
+// Файл: game_types.hpp
+// Назначение: описание «что есть в мире игры» — перечисления и структуры данных без логики боя.
+// Здесь нет cin/cout: типы подключают и тесты, и правила, и консольный слой отдельно.
 // =============================================================================
 
-#include <string>
-#include <vector>
+#include <string>  // тип std::string для имён и текстовых полей
+#include <vector>  // динамический массив частей тела у юнита
 
-namespace game {
+namespace game { // всё игровое пространство имён, чтобы не пересекаться с системными именами
 
 // Состояние брони по ступеням: целая → повреждённая → сломанная.
-enum class ArmorState { Intact, Damaged, Broken };
+enum class ArmorState { Intact, Damaged, Broken }; // три варианта брони в виде перечисления с явными именами
 
 // Часть тела шаблона юнита: характеристики для Lust и (опционально) агр./контр.
 // Агрессия и контроль у союзника не задают цель удара — только Lust и порог срыва;
 // у врага агр./контр. участвуют в AI.
 struct Part {
-  std::string name;
-  int aggression_bonus{};
-  int control_bonus{};
-  int lust_passive_per_turn{};
-  int lust_on_aggressive_action{};
-  int lust_extra_armor_damaged{};
-  int lust_extra_armor_broken{};
-  int lust_per_battle_intensity{};
+  std::string name;              // человекочитаемое имя части (для будущего вывода или отладки)
+  int aggression_bonus{};        // вклад в «агрессию» юнита (суммируется по частям)
+  int control_bonus{};           // вклад в «контроль» юнита (суммируется по частям)
+  int lust_passive_per_turn{};   // пассивный прирост Lust каждый полуход, если часть учтена в сумме
+  int lust_on_aggressive_action{}; // дополнительный Lust при агрессивном действии (атака) в этом полуходе
+  int lust_extra_armor_damaged{};  // дополнительный Lust, пока броня юнита в состоянии «повреждена»
+  int lust_extra_armor_broken{};   // дополнительный Lust, пока броня юнита «сломана»
+  int lust_per_battle_intensity{}; // множитель к «напряжению боя» (умножается на battle_intensity)
 };
 
 // Боевой юнит (союзник или враг): HP, Lust, собственная броня, части.
 struct Unit {
-  std::string name;
-  int hp{};
-  int lust{};
-  ArmorState armor{ArmorState::Intact};
-  std::vector<Part> parts;
+  std::string name;              // имя персонажа для вывода в консоль
+  int hp{};                      // очки здоровья; при 0 или ниже юнит считается погибшим
+  int lust{};                    // накопленное «напряжение»; сравнивается с порогом срыва у союзника
+  ArmorState armor{ArmorState::Intact}; // броня юнита (не путать с бронёй главной героини)
+  std::vector<Part> parts;       // набор частей тела с бонусами к формулам
   // Если true — входящий урон по этому юниту делится пополам (см. deal_damage).
   // У союзника в текущей модели игроком не выставляется; поле для симметрии API.
-  bool guarding{};
+  bool guarding{};               // флаг «стойка защиты» самого юнита (половинит входящий урон один раз)
 
   // Порог срыва: при Lust >= значения автоматическая атака союзника идёт на броню ГГЖ.
-  int lust_redirect_threshold{70};
+  int lust_redirect_threshold{70}; // число по умолчанию 70, если в коде не задали другое
 };
 
 // Главная героиня: игрок выбирает действия; броня снижается при срыве союзника.
 struct GgHeroine {
-  std::string name;
-  ArmorState armor{ArmorState::Intact};
+  std::string name;              // имя героини для текста в бою
+  ArmorState armor{ArmorState::Intact}; // броня героини — отдельная от брони юнитов
   // Стойка «прикрыть союзника»: ослабляет следующий удар врага по союзнику.
-  bool guarding{};
+  bool guarding{};               // true, если в этом раунде игрок выбрал защиту союзника
 };
 
 // Результат разрешения автоматической атаки союзника (без текста для консоли).
@@ -59,11 +59,11 @@ enum class AlliedStrikeKind {
 };
 
 struct AlliedStrikeResolution {
-  AlliedStrikeKind kind{AlliedStrikeKind::DamagedEnemy};
+  AlliedStrikeKind kind{AlliedStrikeKind::DamagedEnemy}; // какой из трёх исходов произошёл
   // Фактический урон по врагу (если kind == DamagedEnemy).
-  int damage_to_enemy = 0;
+  int damage_to_enemy = 0;       // сколько HP снято у врага (0, если удар ушёл не по врагу)
   // Состояние брони ГГЖ до удара — для сообщения о переходе (если DegradedGgArmor).
-  ArmorState gg_armor_before_strike{ArmorState::Intact};
+  ArmorState gg_armor_before_strike{ArmorState::Intact}; // запоминаем «было», чтобы показать стрелку «было → стало»
 };
 
-}  // namespace game
+}  // namespace game // конец пространства имён game

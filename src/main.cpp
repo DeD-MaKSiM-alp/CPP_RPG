@@ -1,43 +1,45 @@
 // =============================================================================
-// main.cpp — точка входа: консоль, демо-состояние, главный цикл боя.
-//
-// Ответственность:
-//   • вызов battle_io::setup_console_utf8 и приветствие;
-//   • создание начального состояния через battle_round::make_demo_battle();
-//   • цикл while (союзник и враг живы): номер раунда, battle_round::run_single_round(...);
-//   • выход из цикла, если раунд вернул не ContinueBattle (победа, поражение, выход игрока).
-//
-// Сценарий одного раунда (порядок полуходов, меню, round_log) не дублируется здесь —
-// он инкапсулирован в battle_round::run_single_round (см. battle_round.cpp).
+// Файл: main.cpp
+// Назначение: единственная точка входа программы — запуск консольной демо-игры «бой».
+// Здесь настраивается консоль, создаётся начальное состояние персонажей и крутится
+// главный цикл раундов, пока бой не закончится победой, поражением или выходом игрока.
+// Подробности одного раунда (меню, полуходы) находятся в battle_round.cpp.
 // =============================================================================
 
-#include "battle_io.hpp"
-#include "battle_round.hpp"
+#include "battle_io.hpp"   // функции вывода в консоль и чтения меню игрока
+#include "battle_round.hpp" // один полный раунд боя и создание демо-состояния
 
+/**
+ * main — старт программы; операционная система передаёт управление сюда при запуске exe.
+ * Зачем: собрать в одном месте порядок шагов «настройка → приветствие → цикл боя».
+ * Где вызывается: только системой при старте процесса (не из другого кода проекта).
+ * Параметры: нет (стандартная сигнатура main в C++).
+ * Возвращает: целое число 0 — признак «программа завершилась без ошибки» для ОС.
+ */
 int main() {
-  battle_io::setup_console_utf8();
+  battle_io::setup_console_utf8(); // переводим кодовые страницы консоли Windows в UTF-8, чтобы кириллица отображалась корректно
 
-  const int battle_intensity = 1;
-  const int attack_damage = 12;
+  const int battle_intensity = 1; // «напряжение боя» — множитель в формулах Lust (константа для демо)
+  const int attack_damage = 12;   // базовый урон атаки, который передаётся в правила боя
 
   // Одна структура вместо трёх отдельных переменных — то же состояние, что раньше в main.
-  battle_round::DemoBattleState state = battle_round::make_demo_battle();
+  battle_round::DemoBattleState state = battle_round::make_demo_battle(); // создаём героиню, союзника и врага с заданными числами и частями тела
 
-  battle_io::print_game_intro(state.ally.lust_redirect_threshold);
+  battle_io::print_game_intro(state.ally.lust_redirect_threshold); // печатаем правила и порог срыва Lust союзника
 
-  int round = 0;
+  int round = 0; // счётчик номера раунда; перед первым раундом ещё 0, в цикле увеличится до 1, 2, …
 
   // Пока оба «якоря» живы — враг и союзник. Исходы «победа/поражение/выход» обрабатываются
   // внутри run_single_round (печать сообщений и возврат kind).
-  while (state.ally.hp > 0 && state.enemy.hp > 0) {
-    ++round;
-    const battle_round::SingleRoundResult rr = battle_round::run_single_round(
-        state.gg, state.ally, state.enemy, battle_intensity, attack_damage, round);
+  while (state.ally.hp > 0 && state.enemy.hp > 0) { // повторяем раунды, пока у союзника и у врага HP строго больше нуля
+    ++round; // увеличиваем номер текущего раунда на единицу перед его выполнением
+    const battle_round::SingleRoundResult rr = battle_round::run_single_round( // запускаем один полный раунд: ГГЖ → союзник → враг
+        state.gg, state.ally, state.enemy, battle_intensity, attack_damage, round); // передаём ссылки на состояние и параметры боя
 
-    if (rr.kind != battle_round::RoundOutcomeKind::ContinueBattle) {
-      break;
+    if (rr.kind != battle_round::RoundOutcomeKind::ContinueBattle) { // если раунд не сказал «продолжай бой», а закончил сценарий
+      break; // выходим из цикла while — дальнейшие раунды не нужны
     }
   }
 
-  return 0;
+  return 0; // сообщаем ОС код успешного завершения (0 — принятое соглашение «всё хорошо»)
 }
